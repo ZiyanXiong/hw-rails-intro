@@ -9,16 +9,23 @@ class MoviesController < ApplicationController
     def index
       @all_ratings = ['G','PG','PG-13','R']
       @checked_ratings = params[:ratings]
+      @sort_order = params[:sort_order]
+      if not session.empty?
+        read_session
+      end
+      
       if not @checked_ratings
         @checked_ratings = @all_ratings
       else
         @checked_ratings = @checked_ratings.keys
       end
       @movies = Movie.with_ratings(@checked_ratings)
-      @sort_order = params[:sort_order]
+
       if @sort_order
         @movies = Movie.with_ratings(@checked_ratings).order @sort_order
       end
+      session['ratings'] = @checked_ratings
+      session['sort_order'] = @sort_order
     end
   
     def new
@@ -54,5 +61,15 @@ class MoviesController < ApplicationController
     # This helps make clear which methods respond to requests, and which ones do not.
     def movie_params
       params.require(:movie).permit(:title, :rating, :description, :release_date)
+    end
+    
+    def read_session
+      if not @checked_ratings
+        @checked_ratings = session[:ratings].map{ |rating| [rating, '1'] }.to_h
+      end
+      
+      if not @sort_order
+        @sort_order = session[:sort_order]
+      end
     end
   end
